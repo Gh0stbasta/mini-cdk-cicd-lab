@@ -1,0 +1,38 @@
+name: Destroy Stack
+
+# Nur manuell ausführbar (Knopf drücken)
+on: 
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::825765399535:role/GitHubActionsRole
+          aws-region: eu-central-1
+
+      - name: Install Dependencies
+        run: |
+          cd infra
+          npm install
+
+      - name: CDK Destroy
+        run: |
+          cd infra
+          # --force ist wichtig, damit er nicht auf eine Bestätigung (y/n) wartet!
+          npx cdk destroy --all --force
