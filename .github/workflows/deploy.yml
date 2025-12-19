@@ -1,0 +1,50 @@
+name: Deploy CDK Stack
+
+# WANN soll das passieren?
+# Immer wenn wir auf den 'main' Branch pushen
+on:
+  push:
+    branches:
+      - main
+
+# WAS soll passieren?
+permissions:
+  id-token: write   # WICHTIG: Erlaubt den OIDC Handshake mit AWS
+  contents: read    # Erlaubt das Auslesen des Repos
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Wir mieten uns kurz einen Linux-Server von GitHub
+
+    steps:
+      # 1. Code auschecken (herunterladen)
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # 2. Node.js installieren (brauchen wir für CDK & TypeScript)
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # 3. AWS Credentials holen (Der "Handshake" mit OIDC)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::825765399535:role/GitHubActionsRole
+          aws-region: eu-central-1
+
+      # 4. Abhängigkeiten installieren
+      # Wir gehen in den 'infra' Ordner, weil dort die package.json liegt
+      - name: Install Dependencies
+        run: |
+          cd infra
+          npm install
+
+      # 5. CDK Deploy ausführen
+      # 'npx cdk' nutzt das lokal installierte CDK.
+      # '--require-approval never' heißt: Frag nicht "Bist du sicher?", mach einfach.
+      - name: CDK Deploy
+        run: |
+          cd infra
+          npx cdk deploy --all --require-approval never
