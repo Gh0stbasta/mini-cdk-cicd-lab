@@ -3,6 +3,8 @@ name: Deploy CDK Stack
 # WANN soll das passieren?
 # Immer wenn wir auf den 'main' Branch pushen
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - main
